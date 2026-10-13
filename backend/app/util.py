@@ -23,6 +23,8 @@ def gesetzliche_pause(brutto_min: int) -> int:
     """Mindestpause nach § 4 ArbZG für eine Anwesenheitsdauer (brutto)."""
     if brutto_min > 9 * 60 + 45:
         return 45
+    if brutto_min > 9 * 60 + 30:
+        return brutto_min - 9 * 60  # Netto bleibt genau 9 h
     if brutto_min > 6 * 60 + 30:
         return 30
     if brutto_min > 6 * 60:

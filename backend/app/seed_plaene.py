@@ -83,12 +83,16 @@ class _Planer:
                 continue
             kandidaten.append((len(frei), self.rng.random(), mid, frei, n, soll))
         kandidaten.sort()
+        knapp = {self.abt["BAC"].id, self.abt["KAS"].id}
+        skill_last: dict[tuple[date, int], int] = {}
         for _, _, mid, frei, n, soll in kandidaten:
+            eigene_knapp = knapp & self.skill_abt.get(mid, set())
             jung = (k.alter(mid, mo) or 99) < 18
             pro_tag = min(_raster(soll * 60 / n), 480 if jung else 510)
             if pro_tag < MIN_SCHICHT // 2:
                 continue
             bewertet = sorted(frei, key=lambda t: last[t] + (self.samstage.get(mid, 0) * 600 if t.weekday() == 5 else 0)
+                              + sum(skill_last.get((t, a), 0) for a in eigene_knapp) * 240
                               + self.rng.random() * 120)
             gewaehlt = sorted(bewertet[:n])
             rest = _raster(soll * 60) - pro_tag * n  # Rundungsrest auf den letzten Tag
@@ -96,6 +100,8 @@ class _Planer:
                 netto = pro_tag + (rest if i == len(gewaehlt) - 1 and 0 < rest < 60 else 0)
                 plan[t][mid] = netto
                 last[t] += netto
+                for a in eigene_knapp:
+                    skill_last[(t, a)] = skill_last.get((t, a), 0) + 1
         return plan
 
     # ------------------------------------------------------------ Phase 2: Zuordnung je Tag
@@ -158,17 +164,22 @@ class _Planer:
                 if not luecken:
                     return
                 t = luecken[0]
-                passend = [mid for mid in kandidaten(abt)
-                           if offen[mid]["lo"] <= t and min(offen[mid]["hi"], ende_abt) - t >= MIN_SCHICHT]
+                def schicht(mid: int) -> tuple[int, int]:
+                    o, b = offen[mid], brutto(mid)
+                    schluss = min(o["hi"], ende_abt)
+                    if t + b >= schluss - 30:  # Spätdienst bis Geschäftsschluss ziehen
+                        return min(t, max(o["lo"], schluss - b)), schluss
+                    return t, t + b
+
+                passend = [mid for mid in kandidaten(abt) if offen[mid]["lo"] <= t
+                           and min(offen[mid]["hi"], ende_abt) > t
+                           and schicht(mid)[1] - schicht(mid)[0] >= MIN_SCHICHT]
                 if not passend:
                     ueberspringen.add(t)
                     continue
                 # spät verfügbare Kräfte zuerst (frühe werden fürs Verräumen gebraucht)
                 mid = min(passend, key=lambda x: (-offen[x]["lo"],) + rang(x, abt))
-                o = offen[mid]
-                ende = min(t + brutto(mid), o["hi"], ende_abt)
-                start = max(o["lo"], ende - brutto(mid)) if ende < t + brutto(mid) else t
-                start = min(start, t)
+                start, ende = schicht(mid)
                 setze(mid, abt, start, ende)
                 for s in belegt:
                     if start <= s < ende:
