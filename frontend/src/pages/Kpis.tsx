@@ -5,9 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { addDays, endOfMonth, format, getISOWeek, getISODay, parseISO, startOfMonth, startOfWeek, subDays, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, LabelList, Line, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { api, VERTRAGSARTEN, WOCHENTAGE, type AbdeckungWert, type Abteilung, type Warengruppe } from '../api'
+import { api, VERTRAGSARTEN, WOCHENTAGE, type AbdeckungWert, type Abteilung, type BedarfTag, type Warengruppe } from '../api'
 import { useStammdaten } from '../hooks'
 import { AbteilungsPunkt, Badge, Button, SeitenKopf, StatKachel, StatusBadge, cx, fmtProzent, fmtStd, fmtTag, toISO } from '../components/ui'
 import { ChartKarte, Umschalter } from '../components/charts/ChartKarte'
@@ -133,19 +133,24 @@ function Anlieferung() {
   })), [d, wgListe, lfdMonat])
 
   const tagesDaten = useMemo(() => {
-    const grenze = toISO(subDays(heute, 56))
-    return (d?.reihe ?? []).filter((r) => r.datum >= grenze && wochentagVon(r.datum) <= 5).map((r) => ({
-      datum: r.datum, gesamt: r.gesamt > 0 ? r.gesamt : null, hotday: hotdays.get(r.datum) ?? null,
-    }))
+    if (!d) return []
+    const nach = new Map(d.reihe.map((r) => [r.datum, r.gesamt]))
+    const zeilen: { datum: string; gesamt: number | null; hotday: { name: string; lastfaktor: number } | null }[] = []
+    for (let t = subDays(parseISO(d.bis), 55); toISO(t) <= d.bis; t = addDays(t, 1)) {
+      const iso = toISO(t)
+      if (wochentagVon(iso) > 5) continue
+      const g = nach.get(iso)
+      zeilen.push({ datum: iso, gesamt: g && g > 0 ? g : null, hotday: hotdays.get(iso) ?? null })
+    }
+    return zeilen
   }, [d, hotdays])
 
-  const stTon = kennzahlen.trend === null ? 'neutral' : 'neutral'
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {anl.error ? <div className="col-span-full"><ChartKarte titel="Kennzahlen" abfragen={[anl]} /></div> : <>
           <StatKachel label="Ø Paletten je Liefertag" wert={anl.isLoading ? '…' : fmtZahl(kennzahlen.m4, 1)} hinweis="letzte 4 Wochen" />
-          <StatKachel label="Trend" ton={stTon} wert={anl.isLoading ? '…' : fmtDelta(kennzahlen.trend)}
+          <StatKachel label="Trend" wert={anl.isLoading ? '…' : fmtDelta(kennzahlen.trend)}
             hinweis={`Ø 4 Wochen vs. Ø 8 Wochen (${fmtZahl(kennzahlen.m8, 1)} Pal.)`} />
           <StatKachel label="Spitzentag" wert={anl.isLoading ? '…' : kennzahlen.spitze ? fmtPal(kennzahlen.spitze.gesamt, 0) : '–'}
             hinweis={kennzahlen.spitze ? `${fmtTag(kennzahlen.spitze.datum)} · letzte 4 Wochen` : 'letzte 4 Wochen'} />
@@ -171,8 +176,9 @@ function Anlieferung() {
                     wert={(v) => fmtPal(v)} summe={(v) => fmtPal(v)} />)} />
                 {wgListe.map((w, i) => (
                   <Bar key={w.id} dataKey={wgKey(w.id)} name={w.name} stackId="a" fill={wgFarbe[w.id]} {...SAEULE} maxBarSize={40}
-                    radius={i === wgListe.length - 1 ? RADIUS_OBEN : undefined}
-                    label={i === wgListe.length - 1 ? { position: 'top', fill: CHROME.text, fontSize: 11, valueAccessor: (e: { payload?: { gesamt?: number } }) => fmtZahl(e.payload?.gesamt ?? 0, 0) } : undefined} />
+                    radius={i === wgListe.length - 1 ? RADIUS_OBEN : undefined}>
+                    {i === wgListe.length - 1 && <LabelList dataKey="gesamt" position="top" fill={CHROME.text} fontSize={11} formatter={(v: unknown) => fmtZahl(Number(v), 0)} />}
+                  </Bar>
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -315,8 +321,9 @@ function PrognoseBedarf() {
                       zusatz={(z) => { const t = tage.find((x) => x.datum === (z as { datum?: string })?.datum); return t?.hotday ? `Hotday: ${t.hotday} (${fmtFaktor(t.lastfaktor)})` : null }} />)} />
                   {wgListe.map((w, i) => (
                     <Bar key={w.id} dataKey={wgKey(w.id)} name={w.name} stackId="a" fill={wgFarbe[w.id]} {...SAEULE} maxBarSize={40}
-                      radius={i === wgListe.length - 1 ? RADIUS_OBEN : undefined}
-                      label={i === wgListe.length - 1 ? { position: 'top', fill: CHROME.text, fontSize: 11, valueAccessor: (e: { payload?: { gesamt?: number } }) => fmtZahl(e.payload?.gesamt ?? 0, 0) } : undefined} />
+                      radius={i === wgListe.length - 1 ? RADIUS_OBEN : undefined}>
+                      {i === wgListe.length - 1 && <LabelList dataKey="gesamt" position="top" fill={CHROME.text} fontSize={11} formatter={(v: unknown) => fmtZahl(Number(v), 0)} />}
+                    </Bar>
                   ))}
                 </BarChart>
               </ResponsiveContainer>
@@ -384,14 +391,20 @@ function PrognoseBedarf() {
         abfragen={[bed, st]} leer={!gewaehlt}
         aktionen={bedTage.length ? <Umschalter label="Tag" aktiv={gewaehlt?.datum ?? ''} onChange={setTagWahl}
           werte={bedTage.map((t) => ({ wert: t.datum, label: WOCHENTAGE[wochentagVon(t.datum)] }))} /> : undefined}>
-        {gewaehlt && <BedarfsKurven tag={gewaehlt} abteilungen={abtSortiert} />}
+        {gewaehlt && <BedarfsKurven tag={gewaehlt} abteilungen={abtSortiert} slotMin={bed.data?.slot_min ?? 30} />}
       </ChartKarte>
     </>
   )
 }
 
 /** Small Multiples: je Abteilung eine Treppenlinie, gemeinsame y-Skala und Zeitachse. */
-function BedarfsKurven({ tag, abteilungen }: { tag: NonNullable<ReturnType<typeof Object>> & { datum: string; geschlossen: boolean; abteilungen: { abteilung_id: number; stunden: number; slots: { beginn: string; koepfe: number }[] }[] }; abteilungen: Abteilung[] }) {
+function slotEnde(beginn: string, min: number) {
+  const [h, m] = beginn.split(':').map(Number)
+  const t = h * 60 + m + min
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+}
+
+function BedarfsKurven({ tag, abteilungen, slotMin }: { tag: BedarfTag; abteilungen: Abteilung[]; slotMin: number }) {
   if (tag.geschlossen) return <div className="py-6 text-center text-sm text-stein">{fmtTag(tag.datum)}: Filiale geschlossen – kein Bedarf.</div>
   const alleSlots = [...new Set(tag.abteilungen.flatMap((a) => a.slots.map((s) => s.beginn)))].sort()
   const yMax = Math.max(1, ...tag.abteilungen.flatMap((a) => a.slots.map((s) => s.koepfe)))
@@ -402,6 +415,8 @@ function BedarfsKurven({ tag, abteilungen }: { tag: NonNullable<ReturnType<typeo
       {zeilen.map(({ a, d }) => {
         const m = new Map(d!.slots.map((s) => [s.beginn, s.koepfe]))
         const daten = alleSlots.map((b) => ({ beginn: b, koepfe: m.get(b) ?? 0 }))
+        // Schlusspunkt, damit der letzte Slot als Stufe sichtbar bleibt
+        if (daten.length) daten.push({ beginn: slotEnde(daten[daten.length - 1].beginn, slotMin), koepfe: daten[daten.length - 1].koepfe })
         const spitze = Math.max(0, ...d!.slots.map((s) => s.koepfe))
         return (
           <div key={a.id}>
@@ -499,7 +514,7 @@ function Abdeckung() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-2 grid grid-cols-6 gap-1 pl-12 pr-2">
+          <div className="mt-2 grid gap-1 pl-12 pr-2" style={{ gridTemplateColumns: `repeat(${Math.max(1, tage.length)}, minmax(0, 1fr))` }}>
             {tage.map((t) => <div key={t.datum} className="flex justify-center"><AbdeckungsBadge w={t} kurz /></div>)}
           </div>
         </ChartKarte>
