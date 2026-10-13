@@ -58,7 +58,7 @@ function AbteilungenTab() {
         {abteilungen.length === 0 ? <Leer titel="Keine Abteilungen" /> : (
           <div className="overflow-x-auto">
             <table className="tabelle">
-              <thead><tr><th>Abteilung</th><th>Kürzel</th><th>Bedarfsart</th><th className="text-right">Mindestbesetzung</th><th>Arbeitszeitfenster</th><th /></tr></thead>
+              <thead><tr><th>Abteilung</th><th>Kürzel</th><th>Bedarfsart</th><th style={{ textAlign: 'right' }}>Mindestbesetzung</th><th>Arbeitszeitfenster</th><th /></tr></thead>
               <tbody>
                 {abteilungen.map((a) => (
                   <tr key={a.id}>
@@ -143,7 +143,7 @@ function WarengruppenTab() {
         {warengruppen.length === 0 ? <Leer titel="Keine Warengruppen" /> : (
           <div className="overflow-x-auto">
             <table className="tabelle">
-              <thead><tr><th>Warengruppe</th><th>Abteilung</th><th>Benötigter Skill</th><th className="text-right">Leistung (Pal/Personenstunde)</th><th className="text-right">Min je Palette</th></tr></thead>
+              <thead><tr><th>Warengruppe</th><th>Abteilung</th><th>Benötigter Skill</th><th style={{ textAlign: 'right' }}>Leistung (Pal/Personenstunde)</th><th style={{ textAlign: 'right' }}>Min je Palette</th></tr></thead>
               <tbody>
                 {warengruppen.map((w) => <WarengruppeZeile key={w.id} w={w} abteilung={abteilungNach[w.abteilung_id]} skill={skillNach[w.skill_id]?.name} />)}
               </tbody>
@@ -175,7 +175,7 @@ function WarengruppeZeile({ w, abteilung, skill }: { w: Warengruppe; abteilung?:
       <td>{skill ?? '–'}</td>
       <td>
         <form className="flex items-center justify-end gap-2" onSubmit={(e) => { e.preventDefault(); if (geaendert) speichern.mutate() }}>
-          <input inputMode="decimal" className={cx(eingabe, 'w-24 text-right tabular-nums', !gueltig && 'border-verstoss')} value={wert}
+          <input inputMode="decimal" className={cx(eingabe, 'text-right tabular-nums')} style={{ width: 96, ...(gueltig ? {} : { borderColor: 'var(--color-verstoss)' }) }} value={wert}
             aria-label={`Leistungswert ${w.name}`} aria-invalid={!gueltig} onChange={(e) => setWert(e.target.value)} />
           <Button klein type="submit" variante={geaendert ? 'primaer' : 'sekundaer'} disabled={!geaendert || speichern.isPending}>Speichern</Button>
           {speichern.isSuccess && !geaendert && <Icon name="ok" className="w-4 h-4 text-ok" titel="Gespeichert" />}
@@ -231,7 +231,7 @@ function SchichtenTab() {
       {schichten.length === 0 ? <Leer titel="Keine Arbeitszeitvorlagen" /> : (
         <div className="overflow-x-auto">
           <table className="tabelle">
-            <thead><tr><th>Vorlage</th><th>Beginn</th><th>Ende</th><th className="text-right">Pause</th><th className="text-right">Netto</th><th className="w-1/3">Lage im Tag (05–22 Uhr)</th></tr></thead>
+            <thead><tr><th>Vorlage</th><th>Beginn</th><th>Ende</th><th style={{ textAlign: 'right' }}>Pause</th><th style={{ textAlign: 'right' }}>Netto</th><th className="w-1/3">Lage im Tag (05–22 Uhr)</th></tr></thead>
             <tbody>
               {schichten.map((s) => {
                 const b = zeitMin(s.beginn), e = zeitMin(s.ende)
@@ -274,7 +274,7 @@ function RegelnTab() {
         {regeln.length === 0 ? <Leer titel="Keine Regelparameter" /> : (
           <div className="overflow-x-auto">
             <table className="tabelle">
-              <thead><tr><th>Beschreibung</th><th>Schlüssel</th><th className="text-right">Wert</th></tr></thead>
+              <thead><tr><th>Beschreibung</th><th>Schlüssel</th><th style={{ textAlign: 'right' }}>Wert</th></tr></thead>
               <tbody>{regeln.map((r) => <RegelZeile key={r.schluessel} r={r} />)}</tbody>
             </table>
           </div>
@@ -303,7 +303,7 @@ function RegelZeile({ r }: { r: Regelparameter }) {
       <td><code className="text-xs text-stein">{r.schluessel}</code></td>
       <td>
         <form className="flex items-center justify-end gap-2" onSubmit={(e) => { e.preventDefault(); if (geaendert) speichern.mutate() }}>
-          <input inputMode="decimal" className={cx(eingabe, 'w-24 text-right tabular-nums', !gueltig && 'border-verstoss')} value={wert}
+          <input inputMode="decimal" className={cx(eingabe, 'text-right tabular-nums')} style={{ width: 96, ...(gueltig ? {} : { borderColor: 'var(--color-verstoss)' }) }} value={wert}
             aria-label={r.beschreibung} aria-invalid={!gueltig} onChange={(e) => setWert(e.target.value)} />
           <Button klein type="submit" variante={geaendert ? 'primaer' : 'sekundaer'} disabled={!geaendert || speichern.isPending}>Speichern</Button>
           {geaendert && <Button klein variante="leise" onClick={() => setWert(String(r.wert).replace('.', ','))} aria-label="Änderung verwerfen" icon="x" />}

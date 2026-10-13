@@ -36,6 +36,7 @@ body {
 }
 :focus-visible { outline: 2px solid var(--color-fell); outline-offset: 2px; }
 
+@layer components {
 /* Formular-Grundstile */
 .eingabe {
   width: 100%;
@@ -53,3 +54,4 @@ body {
   text-transform: uppercase; letter-spacing: 0.04em; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--color-sand); }
 .tabelle td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-sand); }
 .tabelle tbody tr:hover { background: #FDFaF5; }
+}

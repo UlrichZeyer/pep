@@ -21,6 +21,8 @@ router = APIRouter()
 # ---------------------------------------------------------------- Eingabemodelle
 class AbteilungIn(BaseModel):
     name: Optional[str] = None
+    kuerzel: Optional[str] = None
+    bedarfsart: Optional[str] = None
     farbe: Optional[str] = None
     mindestbesetzung: Optional[int] = None
     arbeitszeit_von: Optional[str] = None

@@ -88,7 +88,7 @@ export default function Kalender() {
               ) : (
                 <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
                   <table className="tabelle">
-                    <thead className="sticky top-0 bg-white"><tr><th>Datum</th><th>Typ</th><th>Name</th><th className="text-right">Lastfaktor</th><th>Urlaubssperre</th><th>Quelle</th><th /></tr></thead>
+                    <thead className="sticky top-0 bg-white"><tr><th>Datum</th><th>Typ</th><th>Name</th><th style={{ textAlign: 'right' }}>Lastfaktor</th><th>Urlaubssperre</th><th>Quelle</th><th /></tr></thead>
                     <tbody>
                       {eintraege.map((e) => (
                         <tr key={e.id}>
@@ -316,7 +316,7 @@ function TagModal({ datum, eintrag, info, jahr, onWahl, onSchliessen, onFertig }
               <div className="flex items-center gap-3">
                 <input type="range" min={1} max={2} step={0.05} value={Math.min(2, Math.max(1, form.lastfaktor))} className="flex-1 accent-[var(--color-fell)]"
                   aria-label="Lastfaktor (Schieberegler)" onChange={(e) => set('lastfaktor', Number(e.target.value))} />
-                <input type="number" min={0.5} max={3} step={0.05} className={cx(eingabe, 'w-24 text-right tabular-nums')} aria-label="Lastfaktor"
+                <input type="number" min={0.5} max={3} step={0.05} className={cx(eingabe, 'text-right tabular-nums')} style={{ width: 96 }} aria-label="Lastfaktor"
                   value={form.lastfaktor} onChange={(e) => set('lastfaktor', e.target.value === '' ? 0 : Number(e.target.value))} />
                 {form.typ === 'hotday' && <span className="inline-flex items-center justify-center w-10 h-7 rounded-md text-xs font-bold" style={hotdayStil(form.lastfaktor)}><Flamme /></span>}
               </div>

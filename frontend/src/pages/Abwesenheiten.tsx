@@ -117,11 +117,11 @@ export default function Abwesenheiten() {
         aktionen={
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Icon name="suche" className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-stein" />
-              <input className={cx(eingabe, 'pl-8 w-48')} placeholder="Name oder Pers.-Nr." aria-label="Mitarbeiter suchen"
+              <Icon name="suche" className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-stein z-10 pointer-events-none" />
+              <input className={eingabe} style={{ width: 200, paddingLeft: '2rem' }} placeholder="Name oder Pers.-Nr." aria-label="Mitarbeiter suchen"
                 value={suche} onChange={(e) => setSuche(e.target.value)} />
             </div>
-            <select className={cx(eingabe, 'w-48')} aria-label="Abteilung filtern" value={abteilung}
+            <select className={eingabe} style={{ width: 200 }} aria-label="Abteilung filtern" value={abteilung}
               onChange={(e) => setAbteilung(e.target.value ? Number(e.target.value) : '')}>
               <option value="">Alle Abteilungen</option>
               {stamm.abteilungen.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -284,7 +284,7 @@ function OffeneAntraege({ nach, onFertig, onBearbeiten }: {
           <div className="overflow-x-auto">
             {entscheiden.error && <div className="p-3"><Fehler fehler={entscheiden.error} /></div>}
             <table className="tabelle">
-              <thead><tr><th>Mitarbeiter</th><th>Art</th><th>Zeitraum</th><th>Notiz</th><th className="text-right">Entscheidung</th></tr></thead>
+              <thead><tr><th>Mitarbeiter</th><th>Art</th><th>Zeitraum</th><th>Notiz</th><th style={{ textAlign: 'right' }}>Entscheidung</th></tr></thead>
               <tbody>
                 {offen.map((a) => (
                   <tr key={a.id}>
