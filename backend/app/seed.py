@@ -28,7 +28,7 @@ ABTEILUNGEN = [
     ("Getränke", "GET", "#2F6F6A", 0, "05:00", "21:45", "paletten"),
     ("Aktionsware/Non-Food", "NF", "#8E5BA8", 0, "05:00", "21:45", "paletten"),
     ("Backstation", "BAC", "#D9A400", 1, "06:00", "20:00", "fix"),
-    ("Kasse", "KAS", "#C2185B", 2, "06:45", "21:15", "frequenz"),
+    ("Kasse", "KAS", "#C2185B", 2, "06:30", "21:30", "frequenz"),
 ]
 
 SKILLS = [
