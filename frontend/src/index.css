@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Eichhörnchen-Designsystem – Tokens (siehe docs/UMSETZUNGSPLAN.md) */
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  --color-fell: #B5541E;          /* Primärfarbe: Eichhörnchen-Rostrot */
+  --color-fell-dunkel: #8F3F14;   /* Hover/Pressed */
+  --color-fell-hell: #F6E3D3;     /* Flächen, aktive Navigation */
+  --color-haselnuss: #7A4E2D;     /* Sekundärakzent */
+  --color-eichel: #A06A3B;
+  --color-rinde: #2F2620;         /* Text, Überschriften */
+  --color-moos: #55703B;          /* Natur-Akzent, Erfolgsflächen */
+  --color-moos-hell: #E6EDDC;
+  --color-creme: #FBF7F1;         /* Seitenhintergrund */
+  --color-sand: #EFE6DA;          /* Linien, Sekundärflächen */
+  --color-stein: #7D7268;         /* Hilfstext */
+
+  /* Statusfarben – bewusst getrennt von der Primärfarbe, immer mit Icon/Text */
+  --color-ok: #2E7D32;
+  --color-ok-hell: #E3F1E4;
+  --color-warn: #B26A00;
+  --color-warn-hell: #FDF0DA;
+  --color-verstoss: #C62828;
+  --color-verstoss-hell: #FBE3E3;
+
+  --radius-eich: 10px;
+}
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--color-creme);
+  color: var(--color-rinde);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--color-fell); outline-offset: 2px; }
+
+/* Formular-Grundstile */
+.eingabe {
+  width: 100%;
+  border: 1px solid var(--color-sand);
+  background: white;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+.eingabe:focus { outline: none; border-color: var(--color-fell); box-shadow: 0 0 0 3px var(--color-fell-hell); }
+
+/* Tabellen */
+.tabelle { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
+.tabelle th { text-align: left; font-weight: 700; color: var(--color-stein); font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--color-sand); }
+.tabelle td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-sand); }
+.tabelle tbody tr:hover { background: #FDFaF5; }
