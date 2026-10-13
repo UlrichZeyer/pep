@@ -3,7 +3,7 @@
 Zeiten werden als "HH:MM"-Strings gespeichert (15-Minuten-Raster),
 Wochentage als Ziffernfolge mit 0 = Montag … 5 = Samstag (z. B. "012345").
 """
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from sqlmodel import Field, SQLModel
@@ -131,7 +131,7 @@ class Plan(SQLModel, table=True):
     von: date
     bis: date
     status: str = "entwurf"  # entwurf | freigegeben | veroeffentlicht
-    erstellt_am: datetime = Field(default_factory=datetime.now)
+    erstellt_am: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     quelle: str = "manuell"
 
 
@@ -157,7 +157,7 @@ class Regelparameter(SQLModel, table=True):
 
 class Aenderungslog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    zeit: datetime = Field(default_factory=datetime.now)
+    zeit: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     entitaet: str
     entitaet_id: Optional[int] = None
     aktion: str  # angelegt | geaendert | geloescht

@@ -146,7 +146,7 @@ def _mitarbeiter(session: Session, rng: random.Random, heute: date,
                  abt: dict[str, Abteilung], skills: dict[str, Skill]) -> list[Mitarbeiter]:
     namen_benutzt: set[tuple[str, str]] = set()
     alle: list[Mitarbeiter] = []
-    stamm_rotation = ["TRO", "KAS", "KUE", "OUG", "GET", "KAS", "TRO", "BAC", "KUE", "NF", "KAS", "TK"]
+    stamm_rotation = ["TRO", "KAS", "KUE", "OUG", "GET", "KAS", "TRO", "BAC", "KUE", "NF", "KAS", "OUG"]
     nr = 1001
     for art, soll, max_monat, max_tage, rolle, anzahl in PROFIL:
         for _ in range(anzahl):
@@ -280,7 +280,7 @@ def _abwesenheiten(session: Session, rng: random.Random, heute: date, alle: list
         if m.status == "mutterschutz":
             continue
         # Urlaub: 2–3 Blöcke, außerhalb der Sperrtage
-        for _ in range(rng.randint(2, 3)):
+        for _ in range(rng.randint(1, 2) if m.rolle == "aushilfe" else rng.randint(2, 3)):
             for _versuch in range(20):
                 start = beginn + timedelta(days=rng.randint(0, (ende - beginn).days))
                 start -= timedelta(days=start.weekday())  # ab Montag
