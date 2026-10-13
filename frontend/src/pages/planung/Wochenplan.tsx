@@ -22,6 +22,9 @@ interface Props {
 }
 
 const zellId = (maId: number, datum: string) => `zelle|${maId}|${datum}`
+/** Zeitpunkt des letzten Drag-Endes – unterdrückt den Klick, der direkt danach ausgelöst wird. */
+const gezogen = { zuletzt: 0 }
+const kurzNachZiehen = () => Date.now() - gezogen.zuletzt < 300
 
 // ------------------------------------------------------------------ Einsatzblock
 interface BlockProps {
@@ -34,14 +37,15 @@ interface BlockProps {
   maName: string
 }
 
-function EinsatzInhalt({ einsatz: e, abteilung, verstoesse, maName }: Pick<BlockProps, 'einsatz' | 'abteilung' | 'verstoesse' | 'maName'>) {
+function EinsatzInhalt({ einsatz: e, abteilung, verstoesse }: Pick<BlockProps, 'einsatz' | 'abteilung' | 'verstoesse'>) {
   return (
     <>
       <div className="flex items-center gap-1">
-        <span className="font-bold tabular-nums text-rinde">{e.beginn}–{e.ende}</span>
+        <span className="font-bold tabular-nums text-rinde whitespace-nowrap">{e.beginn}–{e.ende}</span>
         <span className="ml-auto flex items-center gap-0.5 text-haselnuss">
           {e.gesperrt && <Icon name="schloss" className="w-3 h-3" titel="Gesperrt" />}
           {e.quelle === 'auto' && <Icon name="zauber" className="w-3 h-3" titel="Vorschlag der Auto-Planung" />}
+          {verstoesse.length > 0 && <VerstossMarker verstoesse={verstoesse} klein />}
         </span>
       </div>
       <div className="flex items-center gap-1 text-[11px] text-stein">
@@ -49,7 +53,6 @@ function EinsatzInhalt({ einsatz: e, abteilung, verstoesse, maName }: Pick<Block
         <span>· P {e.pause_min}′</span>
         <span className="ml-auto tabular-nums">{fmtStd(e.stunden)}</span>
       </div>
-      {verstoesse.length > 0 && <div className="mt-0.5" aria-label={`Regelverstöße bei ${maName}`}><VerstossMarker verstoesse={verstoesse} klein /></div>}
     </>
   )
 }
@@ -62,7 +65,7 @@ const EinsatzBlock = memo(function EinsatzBlock({ einsatz: e, abteilung, verstoe
     <div id={`einsatz-${e.id}`} ref={setNodeRef} {...attributes} {...listeners}
       role="button" tabIndex={0}
       aria-label={`${maName}: ${e.beginn} bis ${e.ende}, ${abteilung?.name ?? ''}, Pause ${e.pause_min} Minuten${e.gesperrt ? ', gesperrt' : ''}${verstoesse.length ? `, ${verstoesse.length} Regelverstöße` : ''}. Enter zum Bearbeiten${ziehbar ? ', Leertaste zum Verschieben' : ''}`}
-      onClick={(ev) => { ev.stopPropagation(); onOeffnen(e) }}
+      onClick={(ev) => { ev.stopPropagation(); if (!kurzNachZiehen()) onOeffnen(e) }}
       onKeyDown={(ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); onOeffnen(e); return }
         listeners?.onKeyDown?.(ev)
@@ -74,7 +77,7 @@ const EinsatzBlock = memo(function EinsatzBlock({ einsatz: e, abteilung, verstoe
         e.id < 0 && 'opacity-70',
         hart && 'outline outline-1 outline-verstoss/60',
         markiert && 'ring-2 ring-fell ring-offset-1')}>
-      <EinsatzInhalt einsatz={e} abteilung={abteilung} verstoesse={verstoesse} maName={maName} />
+      <EinsatzInhalt einsatz={e} abteilung={abteilung} verstoesse={verstoesse} />
     </div>
   )
 })
@@ -109,20 +112,22 @@ function Zelle({ ma, datum, info, einsaetze, abwesenheit, bearbeitbar, daten, ma
   const { setNodeRef, isOver } = useDroppable({ id: zellId(ma.id, datum), data: { mitarbeiter_id: ma.id, datum }, disabled: geschlossen || !bearbeitbar })
   const oeffnen = (e: Einsatz) => onOeffnen({ einsatz: e, datum: e.datum })
   return (
-    <td ref={setNodeRef}
-      className={cx('align-top !p-1 border-l border-sand min-w-[128px]', geschlossen && 'bg-sand/40', isOver && 'bg-fell-hell')}>
-      <div className="flex flex-col gap-1 min-h-[44px]">
+    <td ref={setNodeRef} data-zelle={`${ma.id}|${datum}`}
+      onClick={() => { if (!geschlossen && bearbeitbar && !kurzNachZiehen()) onOeffnen({ mitarbeiter_id: ma.id, datum }) }}
+      className={cx('align-top !p-1 border-l border-sand min-w-[112px]', geschlossen && 'bg-sand/40', isOver && 'bg-fell-hell',
+        !geschlossen && bearbeitbar && 'cursor-cell')}>
+      <div className="flex flex-col gap-1 min-h-[40px]">
         {abwesenheit && <AbwesenheitsFeld a={abwesenheit} />}
         {einsaetze.map((e) => (
           <EinsatzBlock key={e.id} einsatz={e} abteilung={daten.stamm.abteilungNach[e.abteilung_id]}
             verstoesse={daten.verstoesseNachEinsatz.get(e.id) ?? []} ziehbar={bearbeitbar} markiert={markiert === e.id}
             onOeffnen={oeffnen} maName={ma.name} />
         ))}
-        {!geschlossen && bearbeitbar && (
-          <button type="button" onClick={() => onOeffnen({ mitarbeiter_id: ma.id, datum })}
+        {!geschlossen && bearbeitbar && einsaetze.length === 0 && (
+          <button type="button" onClick={(ev) => { ev.stopPropagation(); onOeffnen({ mitarbeiter_id: ma.id, datum }) }}
             aria-label={`Einsatz anlegen für ${ma.name} am ${fmtDatumKurz(datum)}`}
-            className={cx('flex-1 min-h-[20px] rounded-md text-stein/0 hover:text-stein hover:bg-creme focus:text-stein text-xs flex items-center justify-center',
-              einsaetze.length === 0 && !abwesenheit && 'min-h-[40px]')}>
+            className={cx('flex-1 rounded-md text-stein/0 hover:text-stein hover:bg-creme focus:text-stein text-xs flex items-center justify-center',
+              abwesenheit ? 'min-h-[16px]' : 'min-h-[40px]')}>
             <Icon name="plus" className="w-3.5 h-3.5" />
           </button>
         )}
@@ -191,6 +196,7 @@ export default function Wochenplan({ daten, onOeffnen, markiert, onMarkieren }: 
   const onDragStart = (ev: DragStartEvent) => setAktiv((ev.active.data.current?.einsatz as Einsatz) ?? null)
   const onDragEnd = (ev: DragEndEvent) => {
     setAktiv(null)
+    gezogen.zuletzt = Date.now()
     const e = ev.active.data.current?.einsatz as Einsatz | undefined
     const ziel = ev.over?.data.current as { mitarbeiter_id: number; datum: string } | undefined
     if (!e || !ziel) return
@@ -243,25 +249,26 @@ export default function Wochenplan({ daten, onOeffnen, markiert, onMarkieren }: 
       )}
 
       <div className="flex gap-3 items-start">
-        <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setAktiv(null)}>
+        <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => { setAktiv(null); gezogen.zuletzt = Date.now() }}>
           <div className="flex-1 min-w-0 overflow-x-auto rounded-[var(--radius-eich)] border border-sand bg-white">
             <table className="tabelle">
               <thead className="sticky top-0 z-10 bg-white">
                 <tr>
-                  <th className="min-w-[190px]">Mitarbeiter/in</th>
+                  <th className="min-w-[170px]">Mitarbeiter/in</th>
                   {tage.map((t, i) => {
                     const info = kalenderTage[t]
                     return (
                       <th key={t} className={cx('border-l border-sand !normal-case', info?.geschlossen && 'bg-sand/40')}>
                         <div className="flex items-baseline gap-1 text-rinde"><span className="text-sm font-extrabold">{WOCHENTAGE[i]}</span><span className="font-semibold">{fmtDatumKurz(t)}</span></div>
                         <div className="flex flex-wrap gap-1 mt-0.5">
-                          {info?.geschlossen && <Badge ton="neutral" icon="schloss">geschlossen{info.grund ? ` · ${info.grund}` : ''}</Badge>}
-                          {info?.hotday && <Badge ton="fell" icon="info" titel={info.hotday.name}>Hotday ×{fmtZahl(info.hotday.lastfaktor, 2)}</Badge>}
+                          {info?.geschlossen && <Badge ton="neutral" icon="schloss" titel={info.grund ?? undefined}>geschlossen</Badge>}
+                          {info?.hotday && <Badge ton="info" icon="info" titel={info.hotday.name}>Hotday ×{fmtZahl(info.hotday.lastfaktor, 2)}</Badge>}
                         </div>
+                        {info?.geschlossen && info.grund && <div className="mt-0.5 text-[10px] font-semibold text-stein truncate max-w-[120px]" title={info.grund}>{info.grund}</div>}
                       </th>
                     )
                   })}
-                  <th className="border-l border-sand text-right min-w-[110px]">Σ / Soll</th>
+                  <th className="border-l border-sand text-right min-w-[96px]">Σ / Soll</th>
                 </tr>
               </thead>
               <tbody>
@@ -302,7 +309,7 @@ export default function Wochenplan({ daten, onOeffnen, markiert, onMarkieren }: 
             {aktiv && (
               <div style={{ backgroundColor: farbeHell(aktivAbt?.farbe ?? '#7D7268', 0.3), borderLeftColor: aktivAbt?.farbe }}
                 className="rounded-md border-l-4 px-1.5 py-1 text-xs shadow-lg bg-white w-[124px] cursor-grabbing">
-                <EinsatzInhalt einsatz={aktiv} abteilung={aktivAbt} verstoesse={[]} maName="" />
+                <EinsatzInhalt einsatz={aktiv} abteilung={aktivAbt} verstoesse={[]} />
                 {alt && <div className="mt-0.5"><Badge ton="fell" icon="plus">Kopie</Badge></div>}
               </div>
             )}
@@ -310,7 +317,7 @@ export default function Wochenplan({ daten, onOeffnen, markiert, onMarkieren }: 
         </DndContext>
 
         {listeOffen && (
-          <aside className="w-72 shrink-0 sticky top-4" aria-label="Verstoß-Liste">
+          <aside className="w-64 shrink-0 sticky top-4" aria-label="Verstoß-Liste">
             <Card titel="Regelverstöße" polster={false}>
               {daten.validierungQ.isLoading ? <Laden text="Prüfe Regeln …" /> :
                 daten.validierungQ.isError ? (

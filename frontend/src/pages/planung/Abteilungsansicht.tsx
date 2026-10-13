@@ -34,7 +34,7 @@ export default function Abteilungsansicht({ daten, onOeffnen }: { daten: PlanDat
           <tr>
             <th className="min-w-[110px]">Tag</th>
             {abteilungen.map((a) => (
-              <th key={a.id} className="border-l border-sand !normal-case min-w-[170px]">
+              <th key={a.id} className="border-l border-sand !normal-case min-w-[150px]">
                 <span className="flex items-center gap-1.5 text-rinde text-sm"><AbteilungsPunkt farbe={a.farbe} />{a.name}</span>
               </th>
             ))}
@@ -48,7 +48,7 @@ export default function Abteilungsansicht({ daten, onOeffnen }: { daten: PlanDat
                 <td className="align-top">
                   <div className="font-extrabold text-rinde">{WOCHENTAGE[i]} <span className="font-semibold">{fmtDatumKurz(t)}</span></div>
                   {info?.geschlossen && <Badge ton="neutral" icon="schloss">geschlossen</Badge>}
-                  {info?.hotday && <Badge ton="fell" icon="info" titel={info.hotday.name}>Hotday ×{fmtZahl(info.hotday.lastfaktor, 2)}</Badge>}
+                  {info?.hotday && <Badge ton="info" icon="info" titel={info.hotday.name}>Hotday ×{fmtZahl(info.hotday.lastfaktor, 2)}</Badge>}
                 </td>
                 {abteilungen.map((a) => {
                   const l = nach.get(`${a.id}|${t}`) ?? []

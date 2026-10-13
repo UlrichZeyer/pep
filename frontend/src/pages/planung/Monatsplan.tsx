@@ -56,7 +56,8 @@ export default function Monatsplan({ datum, onTag }: { datum: string; onTag: (d:
       (stamm.abteilungNach[a.stammabteilung_id ?? -1]?.sortierung ?? 99) - (stamm.abteilungNach[b.stammabteilung_id ?? -1]?.sortierung ?? 99) || a.name.localeCompare(b.name))
   }, [maQ.data, einsaetze, anfang, ende, stamm.abteilungNach])
 
-  const offeneTage = tage.filter((t) => !kalenderTage[t]?.geschlossen).length
+  // Soll anteilig über die offenen Tage, die von Plänen abgedeckt sind (ohne Pläne: ganzer Monat)
+  const offeneTage = tage.filter((t) => !kalenderTage[t]?.geschlossen && (plaene.length === 0 || plaene.some((p) => t >= p.von && t <= p.bis))).length
   const jeTag = useMemo(() => tage.map((t) => {
     const l = einsaetze.filter((e) => e.datum === t)
     return { personen: new Set(l.map((e) => e.mitarbeiter_id)).size, stunden: l.reduce((s, e) => s + e.stunden, 0) }
@@ -101,12 +102,12 @@ export default function Monatsplan({ datum, onTag }: { datum: string; onTag: (d:
                           title={info?.grund ?? info?.hotday?.name ?? undefined}>
                           <div className="text-stein text-[10px]">{WOCHENTAGE[wochentagIndex(t)]}</div>
                           <div className="text-rinde">{Number(t.slice(8))}</div>
-                          {info?.hotday && <div className="text-fell-dunkel text-[9px] font-extrabold" aria-hidden>HOT</div>}
+                          {info?.hotday && <div className="text-haselnuss text-[9px] font-extrabold" aria-hidden>HOT</div>}
                         </button>
                       </th>
                     )
                   })}
-                  <th className="px-2 py-1.5 text-right text-stein font-bold uppercase border-b-2 border-l border-sand min-w-[120px]">Σ / Soll anteilig</th>
+                  <th className="px-2 py-1.5 text-right text-stein font-bold uppercase border-b-2 border-l border-sand min-w-[120px]" title="Soll anteilig für die offenen Tage der vorhandenen Wochenpläne">Σ / Soll anteilig</th>
                 </tr>
               </thead>
               <tbody>

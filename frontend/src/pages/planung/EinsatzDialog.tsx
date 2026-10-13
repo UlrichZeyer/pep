@@ -181,7 +181,7 @@ export default function EinsatzDialog({ vorgabe, daten, onSchliessen }:
             fehler={pause < gesetzlich ? `Gesetzlich mind. ${gesetzlich} min (§ 4 ArbZG)` : null}>
             <select className={eingabe} value={pause} onChange={(ev) => { setPause(Number(ev.target.value)); setPauseManuell(true) }}>
               {[...new Set([...PAUSEN, pause, gesetzlich])].sort((a, b) => a - b).map((p) => (
-                <option key={p} value={p}>{p} min{p === gesetzlich ? ' (gesetzlich)' : ''}</option>
+                <option key={p} value={p}>{p} min{p === gesetzlich ? ' ✓' : ''}</option>
               ))}
             </select>
           </Field>

@@ -132,7 +132,7 @@ export default function Tagesansicht({ daten, datum, onDatum, onOeffnen }:
             {WOCHENTAGE[i]} {fmtDatumKurz(t)}
           </button>
         ))}
-        {info?.hotday && <span className="ml-2 text-sm text-fell-dunkel font-bold flex items-center gap-1"><Icon name="info" />Hotday {info.hotday.name} ×{fmtZahl(info.hotday.lastfaktor, 2)}</span>}
+        {info?.hotday && <span className="ml-2 text-sm text-haselnuss font-bold flex items-center gap-1"><Icon name="info" />Hotday {info.hotday.name} ×{fmtZahl(info.hotday.lastfaktor, 2)}</span>}
       </div>
 
       {!plan ? <Card><Leer titel="Noch kein Plan für diese Woche">Lege oben einen Plan an.</Leer></Card>
@@ -146,7 +146,7 @@ export default function Tagesansicht({ daten, datum, onDatum, onOeffnen }:
                     <div className="w-48 shrink-0 px-3 py-2 text-xs font-bold uppercase text-stein">Abteilung / Mitarbeiter</div>
                     <div className="relative flex-1 h-8">
                       {STUNDEN.map((h) => (
-                        <span key={h} className="absolute top-2 -translate-x-1/2 text-[11px] font-semibold text-stein tabular-nums" style={{ left: pos(h) }}>{String(h / 60).padStart(2, '0')}</span>
+                        <span key={h} className={cx('absolute top-2 text-[11px] font-semibold text-stein tabular-nums', h === TAG_ENDE ? '-translate-x-full pr-1' : h === TAG_BEGINN ? 'pl-1' : '-translate-x-1/2')} style={{ left: pos(h) }}>{String(h / 60).padStart(2, '0')}</span>
                       ))}
                     </div>
                   </div>

@@ -79,7 +79,7 @@ export function AbdeckungsAnzeige({ geplant, bedarf, kompakt }: { geplant: numbe
 export function PlanStatusBadge({ status }: { status: PlanStatus }) {
   if (status === 'veroeffentlicht') return <Badge ton="moos" icon="ok">{PLANSTATUS[status]}</Badge>
   if (status === 'freigegeben') return <Badge ton="info" icon="schloss">{PLANSTATUS[status]}</Badge>
-  return <Badge ton="fell" icon="stift">{PLANSTATUS[status]}</Badge>
+  return <Badge ton="neutral" icon="stift">{PLANSTATUS[status]}</Badge>
 }
 
 /** Abweichung geplanter Stunden vom Soll (Status immer mit Text). */
