@@ -2,7 +2,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -38,6 +38,8 @@ if _DIST.exists():
 
     @app.get("/{pfad:path}", include_in_schema=False)
     def spa(pfad: str):
+        if pfad.startswith("api/"):
+            raise HTTPException(404, "Endpunkt nicht gefunden")
         datei = _DIST / pfad
         if pfad and datei.is_file():
             return FileResponse(datei)
